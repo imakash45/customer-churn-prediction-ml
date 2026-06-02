@@ -1,11 +1,15 @@
 import streamlit as st
 import importlib.util
 import sys
+import os
 
-sys.path.append('E:\\Churn-Intelligence')
+# dynamic root path
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
 
 # loading shared styles
-spec = importlib.util.spec_from_file_location("styles", "E:\\Churn-Intelligence\\app\\styles.py")
+spec = importlib.util.spec_from_file_location("styles",
+       os.path.join(ROOT, "app", "styles.py"))
 styles = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(styles)
 
@@ -18,7 +22,6 @@ st.set_page_config(
 
 styles.apply_styles()
 
-# home page
 st.markdown("<h1 style='text-align:center;'>📡 Customer Churn Intelligence System</h1>",
             unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#A0A0B0;'>Predict churn · Understand risk · Retain customers</p>",

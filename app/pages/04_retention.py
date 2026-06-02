@@ -5,11 +5,13 @@ import joblib
 import json
 import importlib.util
 import sys
+import os
 
-sys.path.append('E:\\Churn-Intelligence')
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(ROOT)
 
-# loading shared styles
-spec = importlib.util.spec_from_file_location("styles", "E:\\Churn-Intelligence\\app\\styles.py")
+spec = importlib.util.spec_from_file_location("styles",
+       os.path.join(ROOT, "app", "styles.py"))
 styles = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(styles)
 
@@ -21,13 +23,12 @@ from src.utils.helpers import get_risk_level, format_currency
 st.set_page_config(page_title="Retention Engine", page_icon="🎯", layout="wide")
 styles.apply_styles()
 
-# loading models once
 @st.cache_resource
 def load_models():
-    model = joblib.load('src/models/final_model.pkl')
-    scaler = joblib.load('src/models/scaler.pkl')
-    explainer = joblib.load('src/models/shap_explainer.pkl')
-    with open('src/models/feature_names.json', 'r') as f:
+    model = joblib.load(os.path.join(ROOT, 'src/models/final_model.pkl'))
+    scaler = joblib.load(os.path.join(ROOT, 'src/models/scaler.pkl'))
+    explainer = joblib.load(os.path.join(ROOT, 'src/models/shap_explainer.pkl'))
+    with open(os.path.join(ROOT, 'src/models/feature_names.json'), 'r') as f:
         feature_names = json.load(f)
     return model, scaler, explainer, feature_names
 
@@ -38,7 +39,6 @@ st.markdown("<p style='color:#A0A0B0;'>Enter customer details to get personalize
             unsafe_allow_html=True)
 st.markdown("---")
 
-# customer input
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -77,7 +77,6 @@ with col3:
 st.markdown("---")
 
 if st.button("🎯 Get Retention Recommendations", use_container_width=True):
-
     customer = {
         'Gender': gender, 'Senior Citizen': senior,
         'Partner': partner, 'Dependents': dependents,
@@ -91,7 +90,6 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
         'Total Charges': total_charges, 'CLTV': cltv
     }
 
-    # preprocessing and prediction
     processed = preprocess_input(customer)
     aligned = align_features(processed, feature_names)
     scaled = scaler.transform(aligned)
@@ -100,7 +98,6 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
     risk_level, risk_color = get_risk_level(churn_prob)
     revenue_at_risk = get_revenue_at_risk(churn_prob, cltv)
 
-    # shap drivers
     shap_vals = explainer.shap_values(scaled)
     if len(np.array(shap_vals).shape) == 3:
         shap_row = shap_vals[0, :, 1]
@@ -109,7 +106,6 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
 
     top_drivers = get_top_drivers(shap_row, feature_names, top_n=5)
 
-    # risk summary
     st.markdown("<h2>📊 Customer Risk Summary</h2>", unsafe_allow_html=True)
     r1, r2, r3 = st.columns(3)
     r1.metric("Churn Probability", f"{churn_prob:.1%}")
@@ -117,8 +113,6 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
     r3.metric("Revenue at Risk", format_currency(revenue_at_risk))
 
     st.markdown("---")
-
-    # top churn drivers
     st.markdown("<h3>🔎 Key Churn Drivers</h3>", unsafe_allow_html=True)
     for _, row in top_drivers.iterrows():
         st.markdown(f"""
@@ -128,23 +122,17 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
         </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
-
-    # retention recommendations
     recommendations = get_retention_recommendations(customer, top_drivers)
-
     st.markdown("<h3>🎯 Recommended Retention Actions</h3>", unsafe_allow_html=True)
 
     priority_colors = {'High': '#FF4B4B', 'Medium': '#FFA500', 'Low': '#00CC44'}
-
     for i, rec in enumerate(recommendations):
         color = priority_colors.get(rec['Priority'], '#00B4D8')
         st.markdown(f"""
         <div class='card' style='border-left: 4px solid {color}; margin: 10px 0;'>
             <div style='display:flex; justify-content:space-between;'>
                 <h4 style='color:{color}; margin:0;'>{i+1}. {rec['Action']}</h4>
-                <span style='color:{color}; font-weight:bold;'>
-                    {rec['Priority']} Priority
-                </span>
+                <span style='color:{color}; font-weight:bold;'>{rec['Priority']} Priority</span>
             </div>
             <p style='color:#E0E0E0; margin:8px 0;'>{rec['Detail']}</p>
             <p style='color:#A0A0B0; margin:0;'>📈 {rec['Expected Impact']}</p>
@@ -155,7 +143,7 @@ if st.button("🎯 Get Retention Recommendations", use_container_width=True):
     <div class='card' style='border: 1px solid #FFA500;'>
         <h3 style='color:#FFA500;'>💰 Revenue Impact</h3>
         <p style='color:#E0E0E0;'>
-            If this customer churns, estimated revenue loss is 
+            If this customer churns, estimated revenue loss is
             <span style='color:#FF4B4B; font-weight:bold;'>{format_currency(revenue_at_risk)}</span>.
             Implementing the above retention actions can significantly reduce this risk.
         </p>

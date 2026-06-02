@@ -3,13 +3,16 @@ import pandas as pd
 import numpy as np
 import joblib
 import json
-import sys
+import plotly.express as px
 import importlib.util
+import sys
+import os
 
-sys.path.append('E:\\Churn-Intelligence')
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(ROOT)
 
-# loading shared styles
-spec = importlib.util.spec_from_file_location("styles", "E:\\Churn-Intelligence\\app\\styles.py")
+spec = importlib.util.spec_from_file_location("styles",
+       os.path.join(ROOT, "app", "styles.py"))
 styles = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(styles)
 
@@ -18,16 +21,14 @@ from src.explainability.explainer import get_top_drivers
 from src.utils.helpers import get_risk_level, format_currency, get_churn_summary
 
 st.set_page_config(page_title="Churn Prediction", page_icon="🔍", layout="wide")
-
 styles.apply_styles()
 
-# loading models once using cache - avoids reloading on every interaction
 @st.cache_resource
 def load_models():
-    model = joblib.load('src/models/final_model.pkl')
-    scaler = joblib.load('src/models/scaler.pkl')
-    explainer = joblib.load('src/models/shap_explainer.pkl')
-    with open('src/models/feature_names.json', 'r') as f:
+    model = joblib.load(os.path.join(ROOT, 'src/models/final_model.pkl'))
+    scaler = joblib.load(os.path.join(ROOT, 'src/models/scaler.pkl'))
+    explainer = joblib.load(os.path.join(ROOT, 'src/models/shap_explainer.pkl'))
+    with open(os.path.join(ROOT, 'src/models/feature_names.json'), 'r') as f:
         feature_names = json.load(f)
     return model, scaler, explainer, feature_names
 
@@ -38,7 +39,6 @@ st.markdown("<p style='color:#A0A0B0;'>Enter customer details below to predict c
             unsafe_allow_html=True)
 st.markdown("---")
 
-# customer input form
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -77,7 +77,6 @@ with col3:
 st.markdown("---")
 
 if st.button("🔍 Predict Churn", use_container_width=True):
-
     customer = {
         'Gender': gender, 'Senior Citizen': senior,
         'Partner': partner, 'Dependents': dependents,
@@ -91,7 +90,6 @@ if st.button("🔍 Predict Churn", use_container_width=True):
         'Total Charges': total_charges, 'CLTV': cltv
     }
 
-    # preprocessing and prediction
     processed = preprocess_input(customer)
     aligned = align_features(processed, feature_names)
     scaled = scaler.transform(aligned)
@@ -100,16 +98,11 @@ if st.button("🔍 Predict Churn", use_container_width=True):
     risk_level, risk_color = get_risk_level(churn_prob)
     summary = get_churn_summary(churn_prob, cltv)
 
-    # results section
     st.markdown("<h2>📊 Prediction Results</h2>", unsafe_allow_html=True)
     r1, r2, r3 = st.columns(3)
-
-    with r1:
-        st.metric("Churn Probability", f"{churn_prob:.1%}")
-    with r2:
-        st.metric("Risk Level", risk_level)
-    with r3:
-        st.metric("Revenue at Risk", format_currency(churn_prob * cltv))
+    r1.metric("Churn Probability", f"{churn_prob:.1%}")
+    r2.metric("Risk Level", risk_level)
+    r3.metric("Revenue at Risk", format_currency(churn_prob * cltv))
 
     st.markdown(f"""
     <div class='card'>
@@ -117,9 +110,8 @@ if st.button("🔍 Predict Churn", use_container_width=True):
     </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
-
-    # shap explanation
     st.markdown("<h3>🔎 Why is this customer at risk?</h3>", unsafe_allow_html=True)
+
     shap_vals = explainer.shap_values(scaled)
     if len(np.array(shap_vals).shape) == 3:
         shap_row = shap_vals[0, :, 1]
@@ -128,15 +120,10 @@ if st.button("🔍 Predict Churn", use_container_width=True):
 
     top_drivers = get_top_drivers(shap_row, feature_names, top_n=5)
 
-    import plotly.express as px
     fig = px.bar(top_drivers, x='SHAP Value', y='Feature', orientation='h',
                  color='SHAP Value', color_continuous_scale='Reds',
                  title='Top 5 Churn Drivers for this Customer')
-    fig.update_layout(
-        showlegend=False, height=350,
-        paper_bgcolor='#2A2A3E',
-        plot_bgcolor='#2A2A3E',
-        font=dict(color='#E0E0E0'),
-        title_font=dict(color='#00B4D8')
-    )
+    fig.update_layout(showlegend=False, height=350,
+                      paper_bgcolor='#2A2A3E', plot_bgcolor='#2A2A3E',
+                      font=dict(color='#E0E0E0'), title_font=dict(color='#00B4D8'))
     st.plotly_chart(fig, use_container_width=True)
