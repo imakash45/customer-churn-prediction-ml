@@ -6,7 +6,7 @@ and recommends personalized retention strategies to reduce revenue loss.
 ---
 
 ## 🖥️ Live Demo
-[Click here to view the live app](#) <!-- add deployment link after hosting -->
+[Click here to view the live app](https://churn-intelligence-and-retention.streamlit.app)
 
 ---
 
