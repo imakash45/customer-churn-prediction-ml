@@ -1,11 +1,11 @@
 import streamlit as st
 
-def apply_styles():
+def apply_styles(current_page="home"):
     st.markdown("""
     <style>
     [data-testid="stHeader"] {
         background-color: #1E1E2E;
-        border-bottom: 1px solid #00B4D8;
+        border-bottom: none;
     }
     .stApp {
         background-color: #1E1E2E;
@@ -61,62 +61,40 @@ def apply_styles():
     }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    .block-container {padding-top: 1.5rem;}
-    
-    /* input labels */
-    label, .stSelectbox label, .stSlider label, 
+    .block-container {padding-top: 2rem;}
+    label, .stSelectbox label, .stSlider label,
     .stNumberInput label, .stTextInput label {
         color: #E0E0E0 !important;
         font-size: 14px !important;
     }
-
-    /* selectbox text */
     .stSelectbox div[data-baseweb="select"] {
         background-color: #2A2A3E !important;
         color: #E0E0E0 !important;
     }
-
-    /* selectbox selected value */
     .stSelectbox div[data-baseweb="select"] span {
         color: #E0E0E0 !important;
     }
-
-    /* slider label */
     .stSlider p {
         color: #E0E0E0 !important;
     }
-
-    /* number input */
     .stNumberInput input {
         background-color: #2A2A3E !important;
         color: #E0E0E0 !important;
     }
-
-    /* subheader */
     .stMarkdown p {
         color: #E0E0E0 !important;
     }
-    
-    /* sidebar toggle button */
+    [data-testid="stToolbar"] {
+        visibility: hidden;
+    }
     [data-testid="collapsedControl"] {
-        background-color: #00B4D8 !important;
-        border-radius: 5px !important;
+        background-color: #FFFFFF !important;
+        border-radius: 0 5px 5px 0 !important;
+        width: 25px !important;
+        height: 50px !important;
         color: #1E1E2E !important;
     }
-
-    [data-testid="collapsedControl"] svg {
-        fill: #1E1E2E !important;
-    }
     
-    /* sidebar toggle button when collapsed */
-    [data-testid="collapsedControl"] {
-    background-color: #FFFFFF !important;
-    border-radius: 0 5px 5px 0 !important;
-    width: 25px !important;
-    height: 50px !important;
-    top: 50% !important;
-    color: #1E1E2E !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -125,7 +103,7 @@ def apply_styles():
     <div style='text-align: center; padding: 10px;'>
         <h2 style='color: #00B4D8;'>📡 Churn Intelligence</h2>
         <p style='color: #A0A0B0; font-size: 12px;'>Telecom Customer Retention System</p>
-        <hr style='border-color: #00B4D8;'/>
+        <hr style='border-color: #00B4D8; opacity:0.3;'/>
     </div>
     """, unsafe_allow_html=True)
 
